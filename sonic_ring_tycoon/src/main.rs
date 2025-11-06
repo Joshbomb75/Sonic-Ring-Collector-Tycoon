@@ -2,7 +2,7 @@ use eframe::egui;
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
-    eframe::run_native("My egui App", native_options, Box::new(|cc| OK(Box::new(MyEguiApp::new(cc)))));
+    eframe::run_native("My egui App", native_options, Box::new(|cc| Ok(Box::new(MyEguiApp::new(cc)))));
 }
 
 #[derive(Default)]
@@ -15,9 +15,9 @@ impl MyEguiApp {
 }
 
 impl eframe::App for MyEguiApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hello World!");
-        });
-    }
+fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.heading("Hello World!");
+    });
+}
 }

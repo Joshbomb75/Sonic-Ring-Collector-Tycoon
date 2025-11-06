@@ -1,0 +1,1 @@
+C:\Rust\Sonic-Ring-Collector-Tycoon\sonic_ring_tycoon\target\debug\sonic_ring_tycoon.exe: C:\Rust\Sonic-Ring-Collector-Tycoon\sonic_ring_tycoon\src\lib.rs C:\Rust\Sonic-Ring-Collector-Tycoon\sonic_ring_tycoon\src\main.rs
