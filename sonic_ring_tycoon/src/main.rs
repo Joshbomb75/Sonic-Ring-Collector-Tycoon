@@ -18,9 +18,21 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("💍 Sonic Ring Tycoon 💍");
             ui.label(format!("Rings: {}", self.game.rings));
+            ui.label(format!("Multiplier: {}", self.game.multiplier));
 
             if ui.button("Collect Ring!").clicked() {
-                self.game.rings += 1;
+                self.game.rings += self.game.multiplier;
+            }
+            if ui
+                .button(format!(
+                    "Increase Multiplier! ({}/{} rings)",
+                    self.game.rings, 50
+                ))
+                .clicked()
+                && self.game.rings >= 50
+            {
+                self.game.rings -= 50;
+                self.game.multiplier += 1;
             }
         });
 

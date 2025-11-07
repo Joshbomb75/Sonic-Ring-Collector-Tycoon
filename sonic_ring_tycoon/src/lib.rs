@@ -1,11 +1,23 @@
-#[derive(Default)]
 pub struct GameState {
     pub rings: u64,
+    pub multiplier: u64,
+}
+
+impl Default for GameState {
+    fn default() -> Self {
+        Self {
+            rings: 0,
+            multiplier: 1,
+        }
+    }
 }
 
 impl GameState {
     pub fn new() -> Self {
-        Self { rings: 0 }
+        Self {
+            rings: 0,
+            multiplier: 1,
+        }
     }
 
     pub fn tick(&mut self, dt: f64) {
