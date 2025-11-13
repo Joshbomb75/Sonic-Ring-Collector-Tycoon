@@ -1,4 +1,5 @@
 use sonic_ring_tycoon::GameState;
+use std::time::Instant;
 
 fn main() -> eframe::Result<()> {
     eframe::run_native(
@@ -8,21 +9,51 @@ fn main() -> eframe::Result<()> {
     )
 }
 
-#[derive(Default)]
 struct MyApp {
     game: GameState,
+    last_collect: Instant,
+}
+
+impl Default for MyApp {
+    fn default() -> Self {
+        Self {
+            game: GameState::default(),
+            last_collect: Instant::now(),
+        }
+    }
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Handle auto-collection timing
+        let now = Instant::now();
+        if now.duration_since(self.last_collect).as_secs_f32() >= 1.0 {
+            let collected = self.game.knuckles_collectors * self.game.knuckles_collection_rate;
+            self.game.rings += collected;
+            self.last_collect = now;
+        }
+
+        // Draw the UI
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("💍 Sonic Ring Tycoon 💍");
             ui.label(format!("Rings: {}", self.game.rings));
             ui.label(format!("Multiplier: {}", self.game.multiplier));
+            ui.label(format!(
+                "Passive Rings per Second: {}",
+                self.game.knuckles_collectors * self.game.knuckles_collection_rate
+            ));
+            if self.game.knuckles_collectors > 0 {
+                ui.label(format!(
+                    "Knuckles Collectors: {}",
+                    self.game.knuckles_collectors
+                ));
+            }
 
+            // Collect Ring button
             if ui.button("Collect Ring!").clicked() {
                 self.game.rings += self.game.multiplier;
             }
+            // Multiplier button
             if ui
                 .button(format!(
                     "Increase Multiplier! ({}/{} rings)",
@@ -34,6 +65,18 @@ impl eframe::App for MyApp {
                 self.game.rings -= self.game.multiplier_cost;
                 self.game.multiplier += 1;
                 self.game.multiplier_cost += 10;
+            }
+            if ui
+                .button(format!(
+                    "Enlist Knuckles' Help! ({}/{} rings)",
+                    self.game.rings, self.game.knuckles_cost
+                ))
+                .clicked()
+                && self.game.rings >= self.game.knuckles_cost
+            {
+                self.game.rings -= self.game.knuckles_cost;
+                self.game.knuckles_collectors += 1;
+                self.game.knuckles_cost += 10;
             }
         });
 
