@@ -1,6 +1,6 @@
 use sonic_ring_tycoon::GameState;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 fn main() -> eframe::Result<()> {
     eframe::run_native(
@@ -28,12 +28,11 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Handle auto-collection timing
         let now = Instant::now();
-        let secs = now.duration_since(self.last_collect).as_secs();
-        if secs > 0 {
-            let collected =
-                self.game.knuckles_num_collectors * self.game.knuckles_collection_rate;
-            self.game.rings += collected * secs;
-            self.last_collect += Duration::from_secs(secs);
+        let secs_elapsed = now.duration_since(self.last_collect).as_secs();
+        if secs_elapsed > 0 {
+            let collected = self.game.knuckles_num_collectors * self.game.knuckles_collection_rate;
+            self.game.rings += collected * secs_elapsed;
+            self.last_collect += Duration::from_secs(secs_elapsed);
         }
 
         // Draw the UI
@@ -71,7 +70,8 @@ impl eframe::App for MyApp {
             {
                 self.game.rings -= self.game.multiplier_upgrade_cost;
                 self.game.multiplier += 1;
-                self.game.multiplier_upgrade_cost += 10;
+                self.game.multiplier_upgrade_cost =
+                    (self.game.multiplier_upgrade_cost as f64 * 1.15).round() as u64;
             }
             // Knuckles button (auto-collector)
             let knuckles_button_text = if self.game.knuckles_num_collectors == 0 {
@@ -81,7 +81,7 @@ impl eframe::App for MyApp {
                 )
             } else {
                 format!(
-                    "Increase Knuckles' Collection Rate! ({}/{} rings)",
+                    "Motivate Knuckles to Dig for More Rings! ({}/{} rings)",
                     self.game.rings, self.game.knuckles_upgrade_cost
                 )
             };
@@ -90,7 +90,8 @@ impl eframe::App for MyApp {
             {
                 self.game.rings -= self.game.knuckles_upgrade_cost;
                 self.game.knuckles_num_collectors += 1;
-                self.game.knuckles_upgrade_cost += 10;
+                self.game.knuckles_upgrade_cost =
+                    (self.game.knuckles_upgrade_cost as f64 * 1.15).round() as u64;
             }
         });
 
