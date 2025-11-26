@@ -57,7 +57,7 @@ impl eframe::App for MyApp {
 
             // Collect Ring button
             if ui.button("Collect Ring!").clicked() {
-                self.game.rings += self.game.multiplier;
+                self.game.collect_ring();
             }
             // Multiplier button
             if ui
@@ -66,12 +66,8 @@ impl eframe::App for MyApp {
                     self.game.rings, self.game.multiplier_upgrade_cost
                 ))
                 .clicked()
-                && self.game.rings >= self.game.multiplier_upgrade_cost
             {
-                self.game.rings -= self.game.multiplier_upgrade_cost;
-                self.game.multiplier += 1;
-                self.game.multiplier_upgrade_cost =
-                    (self.game.multiplier_upgrade_cost as f64 * 1.15).round() as u64;
+                self.game.increase_multiplier();
             }
             // Knuckles button (auto-collector)
             let knuckles_button_text = if self.game.knuckles_num_collectors == 0 {
@@ -85,13 +81,8 @@ impl eframe::App for MyApp {
                     self.game.rings, self.game.knuckles_upgrade_cost
                 )
             };
-            if ui.button(knuckles_button_text).clicked()
-                && self.game.rings >= self.game.knuckles_upgrade_cost
-            {
-                self.game.rings -= self.game.knuckles_upgrade_cost;
-                self.game.knuckles_num_collectors += 1;
-                self.game.knuckles_upgrade_cost =
-                    (self.game.knuckles_upgrade_cost as f64 * 1.15).round() as u64;
+            if ui.button(knuckles_button_text).clicked() {
+                self.game.increase_knuckles_collectors();
             }
         });
 

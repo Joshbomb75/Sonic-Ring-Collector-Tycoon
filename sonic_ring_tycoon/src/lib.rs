@@ -19,3 +19,35 @@ impl Default for GameState {
         }
     }
 }
+
+impl GameState {
+    pub fn collect_ring(&mut self) {
+        self.rings += self.multiplier;
+    }
+
+    pub fn increase_multiplier(&mut self) {
+        if self.rings >= self.multiplier_upgrade_cost {
+            self.rings -= self.multiplier_upgrade_cost;
+            self.multiplier += 1;
+            self.multiplier_upgrade_cost =
+                (self.multiplier_upgrade_cost as f64 * 1.15).round() as u64;
+            println!("Multiplier increased to {}", self.multiplier);
+        } else {
+            println!("Not enough rings to increase multiplier");
+        }
+    }
+
+    pub fn increase_knuckles_collectors(&mut self) {
+        if self.rings >= self.knuckles_upgrade_cost {
+            self.rings -= self.knuckles_upgrade_cost;
+            self.knuckles_num_collectors += 1;
+            self.knuckles_upgrade_cost = (self.knuckles_upgrade_cost as f64 * 1.15).round() as u64;
+            println!(
+                "Knuckles collectors increased to {}",
+                self.knuckles_num_collectors
+            );
+        } else {
+            println!("Not enough rings to increase knuckles collectors");
+        }
+    }
+}
