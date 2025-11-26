@@ -1,3 +1,6 @@
+use std::time::Instant;
+use std::time::Duration;
+
 pub struct GameState {
     pub rings: u64,
     pub multiplier: u64,
@@ -5,6 +8,7 @@ pub struct GameState {
     pub knuckles_num_collectors: u64,
     pub knuckles_collection_rate: u64,
     pub knuckles_upgrade_cost: u64,
+    pub last_collect: Instant,
 }
 
 impl Default for GameState {
@@ -16,6 +20,7 @@ impl Default for GameState {
             knuckles_num_collectors: 0,
             knuckles_collection_rate: 1,
             knuckles_upgrade_cost: 10,
+            last_collect: Instant::now(),
         }
     }
 }
@@ -23,6 +28,15 @@ impl Default for GameState {
 impl GameState {
     pub fn collect_ring(&mut self) {
         self.rings += self.multiplier;
+    }
+
+    pub fn update_passive_collection(&mut self, now: Instant) {
+        let secs_elapsed = now.duration_since(self.last_collect).as_secs();
+        if secs_elapsed > 0 {
+            let collected = self.get_passive_rings_per_second() * secs_elapsed;
+            self.rings += collected;
+            self.last_collect += Duration::from_secs(secs_elapsed);
+        }
     }
 
     pub fn increase_multiplier(&mut self) {

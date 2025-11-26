@@ -1,5 +1,4 @@
 use sonic_ring_tycoon::GameState;
-use std::time::Duration;
 use std::time::Instant;
 
 fn main() -> eframe::Result<()> {
@@ -10,30 +9,15 @@ fn main() -> eframe::Result<()> {
     )
 }
 
+#[derive(Default)]
 struct MyApp {
     game: GameState,
-    last_collect: Instant,
-}
-
-impl Default for MyApp {
-    fn default() -> Self {
-        Self {
-            game: GameState::default(),
-            last_collect: Instant::now(),
-        }
-    }
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Handle auto-collection timing
-        let now = Instant::now();
-        let secs_elapsed = now.duration_since(self.last_collect).as_secs();
-        if secs_elapsed > 0 {
-            let collected = self.game.knuckles_num_collectors * self.game.knuckles_collection_rate;
-            self.game.rings += collected * secs_elapsed;
-            self.last_collect += Duration::from_secs(secs_elapsed);
-        }
+        self.game.update_passive_collection(Instant::now());
 
         // Draw the UI
         egui::CentralPanel::default().show(ctx, |ui| {
