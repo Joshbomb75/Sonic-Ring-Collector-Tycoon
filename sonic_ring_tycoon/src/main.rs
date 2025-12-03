@@ -30,36 +30,44 @@ impl eframe::App for MyApp {
                     "Total Passive Rings per Second: {}",
                     passive_rings_per_second
                 ));
-            }
-            if self.game.knuckles_num_collectors > 0 {
                 // knuckles rings per second
-                ui.label(format!(
-                    "Knuckles Rings per Second: {}",
-                    self.game.get_knuckles_rings_per_second()
-                ));
-            }
-            if self.game.chili_dog_num_collectors > 0 {
+                if self.game.knuckles_num_collectors > 0 {
+                    ui.label(format!(
+                        "Knuckles Rings per Second: {}",
+                        self.game.get_knuckles_rings_per_second()
+                    ));
+                }
                 // chili dog rings per second
-                ui.label(format!(
-                    "Chili Dog Cart Rings per Second: {}",
-                    self.game.get_chili_dog_rings_per_second()
-                ));
+                if self.game.chili_dog_num_collectors > 0 {
+                    ui.label(format!(
+                        "Chili Dog Cart Rings per Second: {}",
+                        self.game.get_chili_dog_rings_per_second()
+                    ));
+                }
             }
 
-            // Collect Ring button
-            if ui.button("Collect Ring!").clicked() {
-                self.game.collect_ring();
-            }
-            // Multiplier button
-            if ui
-                .button(format!(
-                    "Increase Multiplier! ({}/{} rings)",
-                    self.game.rings, self.game.multiplier_upgrade_cost
-                ))
-                .clicked()
-            {
-                self.game.increase_multiplier();
-            }
+            // Collect Ring button and Multiplier button side by side
+            ui.horizontal(|ui| {
+                // Collect Ring button
+                if ui
+                    .add(egui::Button::new(
+                        egui::RichText::new("Collect Ring!").size(16.0),
+                    ))
+                    .clicked()
+                {
+                    self.game.collect_ring();
+                }
+                // Multiplier button
+                if ui
+                    .button(format!(
+                        "Increase Multiplier! ({}/{} rings)",
+                        self.game.rings, self.game.multiplier_increase_cost
+                    ))
+                    .clicked()
+                {
+                    self.game.increase_multiplier();
+                }
+            });
             // Knuckles button (auto-collector)
             let knuckles_button_text = self.game.knuckles_button_label();
             if ui.button(knuckles_button_text).clicked() {
