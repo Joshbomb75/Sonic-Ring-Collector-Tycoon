@@ -21,51 +21,77 @@ impl eframe::App for MyApp {
 
         // Draw the UI
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("💍 Sonic Ring Tycoon 💍");
-            ui.label(format!("Rings: {}", self.game.rings));
-            ui.label(format!("Multiplier: {}", self.game.multiplier));
-            let passive_rings_per_second = self.game.get_passive_rings_per_second();
+            ui.heading("💍 Sonic Ring Tycoon 💍"); // heading
+            ui.label(format!("Rings: {}", self.game.rings)); // rings
+            // collect ring button multiplier
+            if self.game.multiplier > 1 {
+                ui.label(format!("Multiplier: {}", self.game.multiplier));
+            }
+            let passive_rings_per_second = self.game.get_passive_rings_per_second(); // passive rings per second
             if passive_rings_per_second > 0 {
                 ui.label(format!(
                     "Total Passive Rings per Second: {}",
                     passive_rings_per_second
                 ));
-            }
-            if self.game.knuckles_num_collectors > 0 {
-                ui.label(format!(
-                    "Knuckles Rings per Second: {}",
-                    self.game.get_knuckles_rings_per_second()
-                ));
+                // knuckles rings per second
+                if self.game.knuckles_num_collectors > 0 {
+                    ui.label(format!(
+                        "Knuckles Rings per Second: {}",
+                        self.game.get_knuckles_rings_per_second()
+                    ));
+                }
+                // chili dog rings per second
+                if self.game.chili_dog_num_collectors > 0 {
+                    ui.label(format!(
+                        "Chili Dog Cart Rings per Second: {}",
+                        self.game.get_chili_dog_rings_per_second()
+                    ));
+                }
             }
 
-            // Collect Ring button
-            if ui.button("Collect Ring!").clicked() {
-                self.game.collect_ring();
-            }
-            // Multiplier button
-            if ui
-                .button(format!(
-                    "Increase Multiplier! ({}/{} rings)",
-                    self.game.rings, self.game.multiplier_upgrade_cost
-                ))
-                .clicked()
+            // Collect Ring button and Multiplier button side by side
+            ui.horizontal(|ui| {
+                // Collect Ring button
+                if ui
+                    .add(egui::Button::new(
+                        egui::RichText::new("Collect Ring!").size(16.0),
+                    ))
+                    .clicked()
+                {
+                    self.game.collect_ring();
+                }
+                // Multiplier button
+                if ui
+                    .button(format!(
+                        "Increase Multiplier! ({}/{} rings)",
+                        self.game.rings, self.game.multiplier_increase_cost
+                    ))
+                    .clicked()
+                {
+                    self.game.increase_multiplier();
+                }
+            });
+            // Knuckles button and upgrade button side by side
+            ui.horizontal(|ui| {
+                // Knuckles button (auto-collector)
+                let knuckles_button_text = self.game.knuckles_button_label();
+                if self.game.multiplier > 1 && ui.button(knuckles_button_text).clicked() {
+                    self.game.increase_knuckles_collectors();
+                }
+                // Knuckles upgrade button
+                if self.game.knuckles_num_collectors > 0
+                    && ui
+                        .button(self.game.knuckles_collection_rate_upgrade_button_label())
+                        .clicked()
+                {
+                    self.game.increase_knuckles_collection_rate();
+                }
+            });
+            // Chili Dog button (auto-collector)
+            let chili_dog_button_text = self.game.chili_dog_button_label();
+            if self.game.knuckles_collection_rate > 1 && ui.button(chili_dog_button_text).clicked()
             {
-                self.game.increase_multiplier();
-            }
-            // Knuckles button (auto-collector)
-            let knuckles_button_text = if self.game.knuckles_num_collectors == 0 {
-                format!(
-                    "Enlist Knuckles' Help to Dig for Rings! ({}/{} rings)",
-                    self.game.rings, self.game.knuckles_upgrade_cost
-                )
-            } else {
-                format!(
-                    "Motivate Knuckles to Dig for More Rings! ({}/{} rings)",
-                    self.game.rings, self.game.knuckles_upgrade_cost
-                )
-            };
-            if ui.button(knuckles_button_text).clicked() {
-                self.game.increase_knuckles_collectors();
+                self.game.increase_chili_dog_collectors();
             }
         });
 
