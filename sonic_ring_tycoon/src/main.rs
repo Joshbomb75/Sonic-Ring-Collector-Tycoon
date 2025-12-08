@@ -1,4 +1,4 @@
-use sonic_ring_tycoon::GameState;
+use sonic_ring_tycoon::{CHILI_DOG_BASE_COLLECTION_RATE, GameState, KNUCKLES_BASE_COLLECTION_RATE};
 use std::time::Instant;
 
 fn main() -> eframe::Result<()> {
@@ -47,6 +47,13 @@ impl eframe::App for MyApp {
                         self.game.get_chili_dog_rings_per_second()
                     ));
                 }
+                // tails rings per second
+                if self.game.tails_num_collectors > 0 {
+                    ui.label(format!(
+                        "Tails' Ring Magnet Drone Rings per Second: {}",
+                        self.game.get_tails_rings_per_second()
+                    ));
+                }
             }
 
             // Collect Ring button and Multiplier button side by side
@@ -91,7 +98,7 @@ impl eframe::App for MyApp {
             ui.horizontal(|ui| {
                 // Chili Dog button
                 let chili_dog_button_text = self.game.chili_dog_button_label();
-                if self.game.knuckles_collection_rate > 1
+                if self.game.knuckles_collection_rate > KNUCKLES_BASE_COLLECTION_RATE
                     && ui.button(chili_dog_button_text).clicked()
                 {
                     self.game.increase_chili_dog_collectors();
@@ -103,6 +110,24 @@ impl eframe::App for MyApp {
                         .clicked()
                 {
                     self.game.increase_chili_dog_collection_rate();
+                }
+            });
+            // Tails button and upgrade button side by side
+            ui.horizontal(|ui| {
+                // Tails button
+                let tails_button_text = self.game.tails_button_label();
+                if self.game.chili_dog_collection_rate > CHILI_DOG_BASE_COLLECTION_RATE
+                    && ui.button(tails_button_text).clicked()
+                {
+                    self.game.increase_tails_collectors();
+                }
+                // Tails upgrade button
+                if self.game.tails_num_collectors > 0
+                    && ui
+                        .button(self.game.tails_collection_rate_upgrade_button_label())
+                        .clicked()
+                {
+                    self.game.increase_tails_collection_rate();
                 }
             });
         });
