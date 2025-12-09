@@ -150,7 +150,10 @@ impl eframe::App for MyApp {
                 }
                 // Chaos emerald count label
                 if self.game.chaos_emerald_count > 0 {
-                    ui.label(format!("Chaos Emerald Count: {}", self.game.chaos_emerald_count));
+                    ui.label(format!(
+                        "Chaos Emerald Count: {}",
+                        self.game.chaos_emerald_count
+                    ));
                 }
             });
         });
