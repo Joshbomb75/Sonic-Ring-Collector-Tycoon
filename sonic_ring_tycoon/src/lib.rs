@@ -12,7 +12,7 @@ pub const CHILI_DOG_BASE_COLLECTION_RATE_UPGRADE_COST: u64 = 500;
 pub const TAILS_BASE_COLLECTION_RATE: u64 = 100;
 pub const TAILS_BASE_ADD_COLLECTOR_COST: u64 = 750;
 pub const TAILS_BASE_COLLECTION_RATE_UPGRADE_COST: u64 = 7500;
-pub const CHAOS_EMERALD_BASE_INCREASE_COST: u64 = 1000000;
+pub const CHAOS_EMERALD_BASE_COST: u64 = 1000000;
 pub const CHAOS_EMERALD_MULTIPLIER: u64 = 2;
 pub const CHAOS_EMERALD_INCREASE_COST_GROWTH_FACTOR: f64 = 1.9;
 
@@ -56,7 +56,7 @@ impl Default for GameState {
             tails_add_collector_cost: TAILS_BASE_ADD_COLLECTOR_COST,
             tails_collection_rate_upgrade_cost: TAILS_BASE_COLLECTION_RATE_UPGRADE_COST,
             chaos_emerald_count: 0,
-            chaos_emerald_increase_cost: CHAOS_EMERALD_BASE_INCREASE_COST,
+            chaos_emerald_increase_cost: CHAOS_EMERALD_BASE_COST,
             last_collect: Instant::now(),
         }
     }

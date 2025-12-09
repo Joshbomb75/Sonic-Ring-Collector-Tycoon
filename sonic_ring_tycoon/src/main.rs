@@ -139,7 +139,7 @@ impl eframe::App for MyApp {
                     self.game.increase_tails_collection_rate();
                 }
             });
-            // Chaos emerald button
+            // Chaos emerald button and label side by side
             ui.horizontal(|ui| {
                 // Chaos emerald button
                 let chaos_emerald_button_text = self.game.chaos_emerald_button_label();
