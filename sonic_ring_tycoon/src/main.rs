@@ -77,11 +77,15 @@ impl eframe::App for MyApp {
                     self.game.collect_ring();
                 }
                 // Multiplier button
+                let can_afford_multiplier = self.game.rings >= self.game.multiplier_increase_cost;
+
+                let increase_multiplier_button = egui::Button::new(format!(
+                    "Increase Multiplier! ({}/{} rings)",
+                    self.game.rings, self.game.multiplier_increase_cost
+                ));
+
                 if ui
-                    .button(format!(
-                        "Increase Multiplier! ({}/{} rings)",
-                        self.game.rings, self.game.multiplier_increase_cost
-                    ))
+                    .add_enabled(can_afford_multiplier, increase_multiplier_button)
                     .clicked()
                 {
                     self.game.increase_multiplier();
@@ -90,14 +94,27 @@ impl eframe::App for MyApp {
             // Knuckles button and upgrade button side by side
             ui.horizontal(|ui| {
                 // Knuckles button (auto-collector)
+                let can_afford_knuckles = self.game.rings >= self.game.knuckles_add_collector_cost;
                 let knuckles_button_text = self.game.knuckles_button_label();
-                if self.game.multiplier > 1 && ui.button(knuckles_button_text).clicked() {
+                let increase_knuckles_button = egui::Button::new(knuckles_button_text);
+                let knuckles_unlocked = self.game.multiplier > 1;
+                if knuckles_unlocked
+                    && ui
+                        .add_enabled(can_afford_knuckles, increase_knuckles_button)
+                        .clicked()
+                {
                     self.game.increase_knuckles_collectors();
                 }
                 // Knuckles upgrade button
-                if self.game.knuckles_num_collectors > 0
+                let can_afford_knuckles_upgrade =
+                    self.game.rings >= self.game.knuckles_collection_rate_upgrade_cost;
+                let knuckles_upgrade_button_text =
+                    self.game.knuckles_collection_rate_upgrade_button_label();
+                let knuckles_upgrade_button = egui::Button::new(knuckles_upgrade_button_text);
+                let knuckles_upgrade_unlocked = self.game.knuckles_num_collectors > 0;
+                if knuckles_upgrade_unlocked
                     && ui
-                        .button(self.game.knuckles_collection_rate_upgrade_button_label())
+                        .add_enabled(can_afford_knuckles_upgrade, knuckles_upgrade_button)
                         .clicked()
                 {
                     self.game.increase_knuckles_collection_rate();
