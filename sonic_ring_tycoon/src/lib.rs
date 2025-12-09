@@ -291,3 +291,406 @@ impl GameState {
             * (CHAOS_EMERALD_MULTIPLIER.pow(self.chaos_emerald_count))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    fn test_default_game_state() {
+        let state = GameState::default();
+        assert_eq!(state.rings, 0);
+        assert_eq!(state.multiplier, 1);
+        assert_eq!(state.multiplier_increase_cost, MULTIPLIER_BASE_COST);
+        assert_eq!(state.knuckles_num_collectors, 0);
+        assert_eq!(state.knuckles_collection_rate, KNUCKLES_BASE_COLLECTION_RATE);
+        assert_eq!(state.knuckles_add_collector_cost, KNUCKLES_BASE_ADD_COLLECTOR_COST);
+        assert_eq!(state.knuckles_collection_rate_upgrade_cost, KNUCKLES_BASE_COLLECTION_RATE_UPGRADE_COST);
+        assert_eq!(state.chili_dog_num_collectors, 0);
+        assert_eq!(state.chili_dog_collection_rate, CHILI_DOG_BASE_COLLECTION_RATE);
+        assert_eq!(state.chili_dog_add_collector_cost, CHILI_DOG_BASE_ADD_COLLECTOR_COST);
+        assert_eq!(state.chili_dog_collection_rate_upgrade_cost, CHILI_DOG_BASE_COLLECTION_RATE_UPGRADE_COST);
+        assert_eq!(state.tails_num_collectors, 0);
+        assert_eq!(state.tails_collection_rate, TAILS_BASE_COLLECTION_RATE);
+        assert_eq!(state.tails_add_collector_cost, TAILS_BASE_ADD_COLLECTOR_COST);
+        assert_eq!(state.tails_collection_rate_upgrade_cost, TAILS_BASE_COLLECTION_RATE_UPGRADE_COST);
+        assert_eq!(state.chaos_emerald_count, 0);
+        assert_eq!(state.chaos_emerald_cost, CHAOS_EMERALD_BASE_COST);
+    }
+
+    #[test]
+    fn test_collect_ring() {
+        let mut state = GameState::default();
+        state.collect_ring();
+        assert_eq!(state.rings, 1);
+        
+        state.multiplier = 5;
+        state.collect_ring();
+        assert_eq!(state.rings, 6);
+    }
+
+    #[test]
+    fn test_update_passive_collection() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 2;
+        state.knuckles_collection_rate = 10;
+        state.last_collect = Instant::now() - Duration::from_secs(5);
+        
+        let initial_rings = state.rings;
+        let now = Instant::now();
+        state.update_passive_collection(now);
+        
+        // Should collect: 2 collectors * 10 rate * 5 seconds = 100 rings
+        assert_eq!(state.rings, initial_rings + 100);
+    }
+
+    #[test]
+    fn test_update_passive_collection_no_time_elapsed() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 2;
+        let initial_rings = state.rings;
+        let now = Instant::now();
+        state.last_collect = now;
+        
+        state.update_passive_collection(now);
+        assert_eq!(state.rings, initial_rings);
+    }
+
+    #[test]
+    fn test_increase_multiplier_sufficient_rings() {
+        let mut state = GameState::default();
+        state.rings = MULTIPLIER_BASE_COST;
+        let initial_cost = state.multiplier_increase_cost;
+        
+        state.increase_multiplier();
+        
+        assert_eq!(state.multiplier, 2);
+        assert_eq!(state.rings, 0);
+        assert!(state.multiplier_increase_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_increase_multiplier_insufficient_rings() {
+        let mut state = GameState::default();
+        state.rings = MULTIPLIER_BASE_COST - 1;
+        let initial_multiplier = state.multiplier;
+        let initial_cost = state.multiplier_increase_cost;
+        
+        state.increase_multiplier();
+        
+        assert_eq!(state.multiplier, initial_multiplier);
+        assert_eq!(state.rings, MULTIPLIER_BASE_COST - 1);
+        assert_eq!(state.multiplier_increase_cost, initial_cost);
+    }
+
+    #[test]
+    fn test_increase_knuckles_collectors() {
+        let mut state = GameState::default();
+        state.rings = KNUCKLES_BASE_ADD_COLLECTOR_COST;
+        let initial_cost = state.knuckles_add_collector_cost;
+        
+        state.increase_knuckles_collectors();
+        
+        assert_eq!(state.knuckles_num_collectors, 1);
+        assert_eq!(state.rings, 0);
+        assert!(state.knuckles_add_collector_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_increase_knuckles_collectors_insufficient_rings() {
+        let mut state = GameState::default();
+        state.rings = KNUCKLES_BASE_ADD_COLLECTOR_COST - 1;
+        let initial_count = state.knuckles_num_collectors;
+        
+        state.increase_knuckles_collectors();
+        
+        assert_eq!(state.knuckles_num_collectors, initial_count);
+        assert_eq!(state.rings, KNUCKLES_BASE_ADD_COLLECTOR_COST - 1);
+    }
+
+    #[test]
+    fn test_increase_knuckles_collection_rate() {
+        let mut state = GameState::default();
+        state.rings = KNUCKLES_BASE_COLLECTION_RATE_UPGRADE_COST;
+        let initial_rate = state.knuckles_collection_rate;
+        let initial_cost = state.knuckles_collection_rate_upgrade_cost;
+        
+        state.increase_knuckles_collection_rate();
+        
+        assert_eq!(state.knuckles_collection_rate, initial_rate + KNUCKLES_BASE_COLLECTION_RATE);
+        assert_eq!(state.rings, 0);
+        assert!(state.knuckles_collection_rate_upgrade_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_knuckles_button_label_no_collectors() {
+        let state = GameState::default();
+        let label = state.knuckles_button_label();
+        assert!(label.contains("Enlist Knuckles' Help"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.knuckles_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_knuckles_button_label_with_collectors() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 1;
+        let label = state.knuckles_button_label();
+        assert!(label.contains("Motivate Knuckles"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.knuckles_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_knuckles_collection_rate_upgrade_button_label() {
+        let state = GameState::default();
+        let label = state.knuckles_collection_rate_upgrade_button_label();
+        assert!(label.contains("Upgrade Knuckles' Gloves"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.knuckles_collection_rate_upgrade_cost.to_string()));
+    }
+
+    #[test]
+    fn test_increase_chili_dog_collectors() {
+        let mut state = GameState::default();
+        state.rings = CHILI_DOG_BASE_ADD_COLLECTOR_COST;
+        let initial_cost = state.chili_dog_add_collector_cost;
+        
+        state.increase_chili_dog_collectors();
+        
+        assert_eq!(state.chili_dog_num_collectors, 1);
+        assert_eq!(state.rings, 0);
+        assert!(state.chili_dog_add_collector_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_increase_chili_dog_collection_rate() {
+        let mut state = GameState::default();
+        state.rings = CHILI_DOG_BASE_COLLECTION_RATE_UPGRADE_COST;
+        let initial_rate = state.chili_dog_collection_rate;
+        let initial_cost = state.chili_dog_collection_rate_upgrade_cost;
+        
+        state.increase_chili_dog_collection_rate();
+        
+        assert_eq!(state.chili_dog_collection_rate, initial_rate + CHILI_DOG_BASE_COLLECTION_RATE);
+        assert_eq!(state.rings, 0);
+        assert!(state.chili_dog_collection_rate_upgrade_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_chili_dog_button_label_no_collectors() {
+        let state = GameState::default();
+        let label = state.chili_dog_button_label();
+        assert!(label.contains("Earn Rings with a Chili Dog Cart"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.chili_dog_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_chili_dog_button_label_with_collectors() {
+        let mut state = GameState::default();
+        state.chili_dog_num_collectors = 1;
+        let label = state.chili_dog_button_label();
+        assert!(label.contains("Open Another Chili Dog Cart"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.chili_dog_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_chili_dog_collection_rate_upgrade_button_label() {
+        let state = GameState::default();
+        let label = state.chili_dog_collection_rate_upgrade_button_label();
+        assert!(label.contains("Add a New Topping"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.chili_dog_collection_rate_upgrade_cost.to_string()));
+    }
+
+    #[test]
+    fn test_increase_tails_collectors() {
+        let mut state = GameState::default();
+        state.rings = TAILS_BASE_ADD_COLLECTOR_COST;
+        let initial_cost = state.tails_add_collector_cost;
+        
+        state.increase_tails_collectors();
+        
+        assert_eq!(state.tails_num_collectors, 1);
+        assert_eq!(state.rings, 0);
+        assert!(state.tails_add_collector_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_increase_tails_collection_rate() {
+        let mut state = GameState::default();
+        state.rings = TAILS_BASE_COLLECTION_RATE_UPGRADE_COST;
+        let initial_rate = state.tails_collection_rate;
+        let initial_cost = state.tails_collection_rate_upgrade_cost;
+        
+        state.increase_tails_collection_rate();
+        
+        assert_eq!(state.tails_collection_rate, initial_rate + TAILS_BASE_COLLECTION_RATE);
+        assert_eq!(state.rings, 0);
+        assert!(state.tails_collection_rate_upgrade_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_tails_button_label_no_collectors() {
+        let state = GameState::default();
+        let label = state.tails_button_label();
+        assert!(label.contains("Ask Tails to Build a Flying Ring Magnet Drone"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.tails_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_tails_button_label_with_collectors() {
+        let mut state = GameState::default();
+        state.tails_num_collectors = 1;
+        let label = state.tails_button_label();
+        assert!(label.contains("Ask Tails to Build Another Drone"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.tails_add_collector_cost.to_string()));
+    }
+
+    #[test]
+    fn test_tails_collection_rate_upgrade_button_label() {
+        let state = GameState::default();
+        let label = state.tails_collection_rate_upgrade_button_label();
+        assert!(label.contains("Tails Upgrades the Drones"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.tails_collection_rate_upgrade_cost.to_string()));
+    }
+
+    #[test]
+    fn test_increase_chaos_emerald_count() {
+        let mut state = GameState::default();
+        state.rings = CHAOS_EMERALD_BASE_COST;
+        let initial_cost = state.chaos_emerald_cost;
+        
+        state.increase_chaos_emerald_count();
+        
+        assert_eq!(state.chaos_emerald_count, 1);
+        assert_eq!(state.rings, 0);
+        assert!(state.chaos_emerald_cost > initial_cost);
+    }
+
+    #[test]
+    fn test_increase_chaos_emerald_count_insufficient_rings() {
+        let mut state = GameState::default();
+        state.rings = CHAOS_EMERALD_BASE_COST - 1;
+        let initial_count = state.chaos_emerald_count;
+        
+        state.increase_chaos_emerald_count();
+        
+        assert_eq!(state.chaos_emerald_count, initial_count);
+        assert_eq!(state.rings, CHAOS_EMERALD_BASE_COST - 1);
+    }
+
+    #[test]
+    fn test_chaos_emerald_button_label() {
+        let state = GameState::default();
+        let label = state.chaos_emerald_button_label();
+        assert!(label.contains("Obtain a Chaos Emerald"));
+        assert!(label.contains(&state.rings.to_string()));
+        assert!(label.contains(&state.chaos_emerald_cost.to_string()));
+    }
+
+    #[test]
+    fn test_get_knuckles_rings_per_second() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 3;
+        state.knuckles_collection_rate = 5;
+        state.chaos_emerald_count = 0;
+        
+        assert_eq!(state.get_knuckles_rings_per_second(), 3 * 5 * 1);
+        
+        state.chaos_emerald_count = 1;
+        assert_eq!(state.get_knuckles_rings_per_second(), 3 * 5 * 2);
+        
+        state.chaos_emerald_count = 2;
+        assert_eq!(state.get_knuckles_rings_per_second(), 3 * 5 * 4);
+    }
+
+    #[test]
+    fn test_get_chili_dog_rings_per_second() {
+        let mut state = GameState::default();
+        state.chili_dog_num_collectors = 2;
+        state.chili_dog_collection_rate = 20;
+        state.chaos_emerald_count = 0;
+        
+        assert_eq!(state.get_chili_dog_rings_per_second(), 2 * 20 * 1);
+        
+        state.chaos_emerald_count = 1;
+        assert_eq!(state.get_chili_dog_rings_per_second(), 2 * 20 * 2);
+    }
+
+    #[test]
+    fn test_get_tails_rings_per_second() {
+        let mut state = GameState::default();
+        state.tails_num_collectors = 4;
+        state.tails_collection_rate = 50;
+        state.chaos_emerald_count = 0;
+        
+        assert_eq!(state.get_tails_rings_per_second(), 4 * 50 * 1);
+        
+        state.chaos_emerald_count = 1;
+        assert_eq!(state.get_tails_rings_per_second(), 4 * 50 * 2);
+    }
+
+    #[test]
+    fn test_get_passive_rings_per_second() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 1;
+        state.knuckles_collection_rate = 10;
+        state.chili_dog_num_collectors = 2;
+        state.chili_dog_collection_rate = 20;
+        state.tails_num_collectors = 3;
+        state.tails_collection_rate = 30;
+        state.chaos_emerald_count = 0;
+        
+        let expected = (1 * 10) + (2 * 20) + (3 * 30);
+        assert_eq!(state.get_passive_rings_per_second(), expected);
+        
+        state.chaos_emerald_count = 1;
+        let expected_with_emerald = expected * 2;
+        assert_eq!(state.get_passive_rings_per_second(), expected_with_emerald);
+    }
+
+    #[test]
+    fn test_multiple_upgrades_cost_growth() {
+        let mut state = GameState::default();
+        state.rings = 10000;
+        
+        let first_cost = state.multiplier_increase_cost;
+        state.increase_multiplier();
+        let second_cost = state.multiplier_increase_cost;
+        
+        // Cost should increase by growth factor (accounting for rounding)
+        assert!(second_cost > first_cost);
+        let expected_cost = (first_cost as f64 * CONST_GROWTH_FACTOR).round() as u64;
+        assert_eq!(second_cost, expected_cost);
+    }
+
+    #[test]
+    fn test_chaos_emerald_multiplier_effect() {
+        let mut state = GameState::default();
+        state.knuckles_num_collectors = 1;
+        state.knuckles_collection_rate = 10;
+        
+        let base_rate = state.get_knuckles_rings_per_second();
+        assert_eq!(base_rate, 10);
+        
+        state.rings = CHAOS_EMERALD_BASE_COST;
+        state.increase_chaos_emerald_count();
+        
+        let doubled_rate = state.get_knuckles_rings_per_second();
+        assert_eq!(doubled_rate, 20);
+        
+        // Get another emerald
+        state.rings = state.chaos_emerald_cost;
+        state.increase_chaos_emerald_count();
+        
+        let quadrupled_rate = state.get_knuckles_rings_per_second();
+        assert_eq!(quadrupled_rate, 40);
+    }
+}
